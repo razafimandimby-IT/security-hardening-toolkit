@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport de Conformite - Security Hardening Toolkit</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+            background: #f0f2f5;
+            color: #1a202c;
+            line-height: 1.6;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+        .header {
+            background: linear-gradient(135deg, #0f1923 0%, #1a2332 50%, #2d3748 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(66, 153, 225, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        .header h1 { font-size: 2.4em; font-weight: 700; letter-spacing: -0.5px; }
+        .header .shield {
+            display: inline-block;
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        .header .subtitle { color: #a0aec0; font-size: 1.1em; margin-top: 5px; }
+        .header .meta { color: #718096; font-size: 0.85em; margin-top: 10px; }
+
+        /* Score gauge */
+        .score-section {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+            text-align: center;
+        }
+        .gauge {
+            width: 200px; height: 200px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+        .gauge-inner {
+            width: 155px; height: 155px;
+            border-radius: 50%;
+            background: white;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .gauge-value { font-size: 3em; font-weight: 800; line-height: 1; }
+        .gauge-label { font-size: 0.9em; color: #718096; margin-top: 5px; }
+        .gauge-desc { font-size: 1.2em; font-weight: 600; }
+
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
+        .stat-card {
+            background: white; padding: 25px; border-radius: 12px;
+            text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .stat-card .num { font-size: 2.5em; font-weight: 700; }
+        .stat-card .lbl { font-size: 0.85em; color: #718096; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Sections */
+        .section {
+            background: white; border-radius: 16px; padding: 25px 30px;
+            margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .section h2 {
+            font-size: 1.4em; color: #2d3748; margin-bottom: 20px;
+            padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;
+        }
+
+        /* Tables */
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            background: #1a202c; color: white; padding: 12px 15px;
+            text-align: left; font-size: 0.8em; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        th:first-child { border-radius: 8px 0 0 0; }
+        th:last-child { border-radius: 0 8px 0 0; }
+        td { padding: 10px 15px; border-bottom: 1px solid #e2e8f0; font-size: 0.9em; }
+        tr:last-child td:first-child { border-radius: 0 0 0 8px; }
+        tr:last-child td:last-child { border-radius: 0 0 8px 0; }
+        tr:hover { background: #f7fafc; }
+
+        /* Badges */
+        .badge {
+            display: inline-block; padding: 3px 10px; border-radius: 4px;
+            font-size: 0.75em; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .badge-pass { background: #c8e6c9; color: #2e7d32; }
+        .badge-fail { background: #ffcdd2; color: #c62828; }
+        .badge-warning { background: #ffe0b2; color: #e65100; }
+        .badge-error { background: #f8bbd0; color: #880e4f; }
+        .badge-info { background: #b3e5fc; color: #01579b; }
+
+        .severity-c { background: linear-gradient(135deg, #f44336, #d32f2f); color: white; }
+        .severity-h { background: linear-gradient(135deg, #ff9800, #f57c00); color: white; }
+        .severity-m { background: linear-gradient(135deg, #2196f3, #1976d2); color: white; }
+        .severity-l { background: linear-gradient(135deg, #607d8b, #455a64); color: white; }
+
+        .mini-bar { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; display: inline-block; width: 100px; margin-right: 8px; vertical-align: middle; }
+        .mini-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+
+        .alert { padding: 15px 20px; border-radius: 8px; margin: 15px 0; display: flex; align-items: center; gap: 10px; }
+        .alert-danger { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
+        .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; }
+        .alert-warning { background: #fffbeb; border: 1px solid #fde68a; color: #d97706; }
+
+        .system-info table td { border: none; padding: 8px 15px; }
+        .system-info table td:first-child { width: 250px; font-weight: 600; color: #4a5568; }
+
+        code {
+            background: #f1f5f9; padding: 2px 8px; border-radius: 4px;
+            font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.9em;
+        }
+
+        ul { padding-left: 20px; line-height: 2.2; }
+
+        .footer {
+            text-align: center; padding: 30px; color: #a0aec0; font-size: 0.85em;
+            border-top: 1px solid #e2e8f0; margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .header { padding: 25px; }
+            .header h1 { font-size: 1.6em; }
+            .gauge { width: 150px; height: 150px; }
+            .gauge-inner { width: 115px; height: 115px; }
+            .gauge-value { font-size: 2em; }
+        }
+        @media print {
+            body { background: white; }
+            .header { border-radius: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .stat-card:hover { transform: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="shield">&#128737;</div>
+            <h1>Security Hardening Toolkit</h1>
+            <div class="subtitle">Rapport de Conformite</div>
+            <div class="meta">
+                {{COMPANY_NAME}} | {{HOSTNAME}} | {{AUDIT_DATE}}
+            </div>
+        </div>
+
+        <!-- Score section -->
+        <div class="score-section">
+            <div class="gauge" style="background: conic-gradient({{SCORE_COLOR}} 0deg {{SCORE_ANGLE}}deg, #e2e8f0 {{SCORE_ANGLE}}deg 360deg);">
+                <div class="gauge-inner">
+                    <div class="gauge-value" style="color: {{SCORE_COLOR}}">{{SCORE}}%</div>
+                    <div class="gauge-label">Score global</div>
+                </div>
+            </div>
+            <div class="gauge-desc" style="color: {{SCORE_COLOR}}">{{SCORE_LABEL}}</div>
+            <p style="color: #718096; margin-top: 10px;">
+                {{PASS_COUNT}} sur {{TOTAL_COUNT}} tests reussis
+            </p>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="num" style="color: #4caf50">{{PASS_COUNT}}</div>
+                <div class="lbl">Tests passes</div>
+            </div>
+            <div class="stat-card">
+                <div class="num" style="color: #f44336">{{FAIL_COUNT}}</div>
+                <div class="lbl">Tests echoues</div>
+            </div>
+            <div class="stat-card">
+                <div class="num" style="color: #ff9800">{{WARN_COUNT}}</div>
+                <div class="lbl">Avertissements</div>
+            </div>
+            <div class="stat-card">
+                <div class="num" style="color: #2196f3">{{TOTAL_CHECKS}}</div>
+                <div class="lbl">Tests effectues</div>
+            </div>
+        </div>
+
+        <!-- Categories Summary -->
+        <div class="section">
+            <h2>Resultats par Categorie</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Categorie</th>
+                            <th>Pass</th>
+                            <th>Fail</th>
+                            <th>Warn</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{CATEGORY_ROWS}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- System Information -->
+        <div class="section system-info">
+            <h2>Informations Systeme</h2>
+            <table>
+                <tr><td>Nom de la machine</td><td>{{HOSTNAME}}</td></tr>
+                <tr><td>Systeme d'exploitation</td><td>{{OS_NAME}}</td></tr>
+                <tr><td>Version</td><td>{{OS_VERSION}}</td></tr>
+                <tr><td>Architecture</td><td>{{OS_ARCH}}</td></tr>
+                <tr><td>Domaine</td><td>{{DOMAIN}}</td></tr>
+                <tr><td>Memoire</td><td>{{MEMORY}} Go</td></tr>
+                <tr><td>Date d'audit</td><td>{{AUDIT_DATE}}</td></tr>
+            </table>
+        </div>
+
+        <!-- Critical Failures -->
+        <div class="section">
+            <h2>Echecs Critiques</h2>
+            {{CRITICAL_FAILURES}}
+        </div>
+
+        <!-- Recommendations -->
+        <div class="section">
+            <h2>Recommandations</h2>
+            <ul>
+                <li><strong>{{FAIL_COUNT}} non-conformites</strong> identifiees necessitant une action corrective</li>
+                <li>Executer le script de remediation approprie</li>
+                <li>Planifier un audit regulier (recommandation: mensuel)</li>
+                <li>Consulter la documentation dans le repertoire <code>docs/</code></li>
+            </ul>
+        </div>
+
+        <!-- Detailed Results -->
+        <div class="section">
+            <h2>Details des Verifications ({{TOTAL_CHECKS}} tests)</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Categorie</th>
+                            <th>Description</th>
+                            <th>Attendu</th>
+                            <th>Actuel</th>
+                            <th>Statut</th>
+                            <th>Remediation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{RESULT_ROWS}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p><strong>Security Hardening Toolkit v1.0.0</strong></p>
+            <p>Developpe par Louis Denis RAZAFIMANDIMBY</p>
+            <p>Genere le {{AUDIT_DATE}} | Duree: {{DURATION}}</p>
+        </div>
+    </div>
+</body>
+</html>
