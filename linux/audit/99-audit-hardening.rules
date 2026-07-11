@@ -1,0 +1,187 @@
+# ==============================================================================
+# Regles auditd pour le durcissement de securite - Security Hardening Toolkit
+# Conforme CIS Benchmarks pour Linux
+# Auteur: Louis Denis RAZAFIMANDIMBY
+#
+# Installation:
+#   sudo cp 99-audit-hardening.rules /etc/audit/rules.d/
+#   sudo systemctl restart auditd
+#   sudo auditctl -l  # Verifier les regles chargees
+# ==============================================================================
+
+# ---------------------------------------------------------------------------
+# 1. Supprimer les regles existantes (au chargement)
+# ---------------------------------------------------------------------------
+-D
+
+# ---------------------------------------------------------------------------
+# 2. Definir les tampons
+# ---------------------------------------------------------------------------
+-b 8192
+
+# ---------------------------------------------------------------------------
+# 3. Mode defaut: echec silencieux
+# ---------------------------------------------------------------------------
+-f 1
+
+# ---------------------------------------------------------------------------
+# 4. Surveillance des horodatages
+# ---------------------------------------------------------------------------
+
+# Surveiller les changements de date/heure
+-w /etc/localtime -p wa -k time_change
+-a always,exit -S adjtimex -S settimeofday -S clock_settime -k time_change
+-a always,exit -S stime -k time_change
+
+# ---------------------------------------------------------------------------
+# 5. Surveillance des utilisateurs et groupes
+# ---------------------------------------------------------------------------
+
+# Surveiller les fichiers de comptes utilisateurs
+-w /etc/passwd -p wa -k identity
+-w /etc/shadow -p wa -k identity
+-w /etc/group -p wa -k identity
+-w /etc/gshadow -p wa -k identity
+-w /etc/security/opasswd -p wa -k identity
+
+# Surveiller les modifications sudoers
+-w /etc/sudoers -p wa -k sudoers
+-w /etc/sudoers.d/ -p wa -k sudoers
+
+# Surveiller l'execution de sudo
+-a always,exit -S execve -F uid=0 -k sudo_command
+-a always,exit -F path=/usr/bin/sudo -F perm=x -k sudo_log
+
+# ---------------------------------------------------------------------------
+# 6. Surveillance du reseau et des connexions
+# ---------------------------------------------------------------------------
+
+# Surveiller les modifications de configuration reseau
+-w /etc/hosts -p wa -k network
+-w /etc/network/ -p wa -k network
+-w /etc/networks -p wa -k network
+-w /etc/resolv.conf -p wa -k network
+-w /etc/nsswitch.conf -p wa -k network
+
+# Surveiller les modifications de pare-feu
+-w /etc/iptables/ -p wa -k firewall
+-w /etc/nftables/ -p wa -k firewall
+-w /etc/sysconfig/iptables -p wa -k firewall
+-w /etc/sysconfig/nftables -p wa -k firewall
+-w /etc/ufw/ -p wa -k firewall
+
+# Surveiller les connexions entrantes
+-a always,exit -F arch=b64 -S accept -S bind -S connect -k network_connect
+-a always,exit -F arch=b32 -S accept -S bind -S connect -k network_connect
+
+# ---------------------------------------------------------------------------
+# 7. Surveillance des modifications du kernel
+# ---------------------------------------------------------------------------
+
+# Surveiller le chargement/dechargement de modules kernel
+-w /etc/modprobe.conf -p wa -k modules
+-w /etc/modprobe.d/ -p wa -k modules
+-w /etc/modules -p wa -k modules
+-w /etc/modules-load.d/ -p wa -k modules
+-a always,exit -F arch=b64 -S init_module -S delete_module -S finit_module -k modules
+-a always,exit -F arch=b32 -S init_module -S delete_module -S finit_module -k modules
+
+# Chargement de modules non autorise
+-a always,exit -F arch=b64 -S create_module -k module_load
+-a always,exit -F arch=b32 -S create_module -k module_load
+
+# ---------------------------------------------------------------------------
+# 8. Surveillance des appels systeme critiques
+# ---------------------------------------------------------------------------
+
+# Monter/ demonter les filesystem
+-a always,exit -F arch=b64 -S mount -S umount2 -k filesystem_mount
+-a always,exit -F arch=b32 -S mount -S umount2 -k filesystem_mount
+
+# Changement de privileges
+-a always,exit -F arch=b64 -S setuid -S setgid -S setreuid -S setregid -S setresuid -S setresgid -k privilege
+-a always,exit -F arch=b32 -S setuid -S setgid -S setreuid -S setregid -S setresuid -S setresgid -k privilege
+
+# Changement de capacites
+-a always,exit -F arch=b64 -S capset -k capabilities
+-a always,exit -F arch=b32 -S capset -k capabilities
+
+# ---------------------------------------------------------------------------
+# 9. Surveillance des fichiers de configuration critiques
+# ---------------------------------------------------------------------------
+
+# Configuration SSH
+-w /etc/ssh/sshd_config -p wa -k sshd
+-w /etc/ssh/sshd_config.d/ -p wa -k sshd
+
+# Configuration systeme
+-w /etc/selinux/ -p wa -k selinux
+-w /etc/apparmor/ -p wa -k apparmor
+-w /etc/apparmor.d/ -p wa -k apparmor
+
+# Configuration sysctl
+-w /etc/sysctl.conf -p wa -k sysctl
+-w /etc/sysctl.d/ -p wa -k sysctl
+
+# ---------------------------------------------------------------------------
+# 10. Surveillance des processus et sessions
+# ---------------------------------------------------------------------------
+
+# Surveillance de l'ecriture des logs (tentatives d'effacement)
+-w /var/log/auth.log -p wa -k log_files
+-w /var/log/syslog -p wa -k log_files
+-w /var/log/kern.log -p wa -k log_files
+-w /var/log/audit/ -p wa -k audit_log_files
+-w /var/log/audit/audit.log -p wa -k audit_log_files
+
+# Surveillance des sessions utilisateur
+-w /var/log/wtmp -p wa -k session
+-w /var/log/btmp -p wa -k session
+-w /var/run/utmp -p wa -k session
+
+# ---------------------------------------------------------------------------
+# 11. Detection de mouvements lateraux
+# ---------------------------------------------------------------------------
+
+# Execution de shells
+-a always,exit -F arch=b64 -S execve -k shell
+-a always,exit -F arch=b32 -S execve -k shell
+
+# Connexions SSH sortantes
+-a always,exit -F arch=b64 -S connect -F a2=16 -F success=1 -k ssh_outbound
+-a always,exit -F arch=b32 -S connect -F a2=16 -F success=1 -k ssh_outbound
+
+# ---------------------------------------------------------------------------
+# 12. Changements de droits de fichiers (chmod/chown)
+# ---------------------------------------------------------------------------
+
+-a always,exit -F arch=b64 -S chmod -S fchmod -S fchmodat -k file_permissions
+-a always,exit -F arch=b32 -S chmod -S fchmod -S fchmodat -k file_permissions
+-a always,exit -F arch=b64 -S chown -S fchown -S lchown -S fchownat -k file_ownership
+-a always,exit -F arch=b32 -S chown -S fchown -S lchown -S fchownat -k file_ownership
+-a always,exit -F arch=b64 -S setxattr -S lsetxattr -S fsetxattr -S removexattr -S lremovexattr -S fremovexattr -k file_attributes
+-a always,exit -F arch=b32 -S setxattr -S lsetxattr -S fsetxattr -S removexattr -S lremovexattr -S fremovexattr -k file_attributes
+
+# ---------------------------------------------------------------------------
+# 13. Fichiers speciaux a surveiller
+# ---------------------------------------------------------------------------
+
+# Detection d'ecouteur reseau
+-a always,exit -F arch=b64 -S socket -F a0=2 -k socket_inet
+-a always,exit -F arch=b32 -S socket -F a0=2 -k socket_inet
+
+# Creations de socket de domaine Unix
+-a always,exit -F arch=b64 -S socket -F a0=1 -k socket_local
+-a always,exit -F arch=b32 -S socket -F a0=1 -k socket_local
+
+# ---------------------------------------------------------------------------
+# 14. Verrouiller la configuration auditd
+# ---------------------------------------------------------------------------
+
+# Rendre la configuration auditd immuable (empecher les modifications)
+# Decommentez la ligne suivante si vous voulez empecher toute modification
+# des regles auditd jusqu'au prochain redemarrage.
+# -e 2
+
+# Note: -e 2 verrouille les regles auditd. Pour les modifier apres, il faut
+# redemarrer le service auditd.
