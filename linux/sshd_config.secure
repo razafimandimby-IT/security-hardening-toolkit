@@ -1,0 +1,94 @@
+# ==============================================================================
+# Configuration SSH durcie - Security Hardening Toolkit
+# Conforme CIS Benchmarks pour OpenSSH Server
+# Auteur: Louis Denis RAZAFIMANDIMBY
+#
+# Installation:
+#   sudo cp sshd_config.secure /etc/ssh/sshd_config
+#   sudo chmod 600 /etc/ssh/sshd_config
+#   sudo systemctl restart sshd
+#
+# ATTENTION: Testez d'abord en conservant une session SSH ouverte !
+# ==============================================================================
+
+# --- Port d'ecoute ---
+# Modifier le port par defaut (22) peut reduire les attaques automatiques
+Port 22
+# Port 2222  # Decommentez pour utiliser un port alternatif
+
+# --- Authentification ---
+PubkeyAuthentication yes
+PasswordAuthentication no
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+KerberosAuthentication no
+GSSAPIAuthentication no
+HostbasedAuthentication no
+IgnoreRhosts yes
+RhostsRSAAuthentication no
+
+# --- Acces root ---
+PermitRootLogin no
+
+# --- Limites de connexion ---
+MaxAuthTries 3
+MaxSessions 10
+MaxStartups 10:30:60
+LoginGraceTime 60
+
+# --- Timeout session ---
+ClientAliveInterval 300
+ClientAliveCountMax 2
+TCPKeepAlive no
+
+# --- Forwarding ---
+X11Forwarding no
+AllowAgentForwarding no
+AllowTcpForwarding no
+PermitTunnel no
+
+# --- Chiffrement (Algorithmes forts uniquement) ---
+# Chiffrements recommandes (CIS Level 2)
+Ciphers aes256-ctr,aes192-ctr,aes128-ctr
+# Ciphers aes256-gcm@openssh.com,aes128-gcm@openssh.com  # Decommentez pour CIS Advanced
+
+# MACs recommandes
+MACs hmac-sha2-512,hmac-sha2-256
+
+# Kex Algorithms recommandee
+KexAlgorithms curve25519-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,diffie-hellman-group-exchange-sha256
+
+# Echange de cles diffie-hellman minimal
+KexAlgorithms curve25519-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,diffie-hellman-group-exchange-sha256
+
+# --- Mode FIPS 140-2 ---
+# RekeyLimit (forcer le re-chiffrement periodique)
+RekeyLimit 1G 1h
+
+# --- Journalisation ---
+LogLevel VERBOSE
+SyslogFacility AUTH
+
+# --- Banniere ---
+Banner /etc/ssh/banner
+
+# --- Divers ---
+PrintMotd no
+PrintLastLog yes
+UsePAM yes
+UseDNS no
+Compression no
+# AllowUsers  # Decommentez pour limiter les utilisateurs autorises
+# DenyUsers   # Decommentez pour bloquer des utilisateurs specifiques
+# AllowGroups # Decommentez pour limiter aux groupes autorises
+
+# --- Sous-systeme SFTP ---
+Subsystem sftp internal-sftp
+# Restreindre SFTP en chroot
+Match group sftpusers
+    ChrootDirectory /srv/sftp/%u
+    ForceCommand internal-sftp
+    X11Forwarding no
+    AllowTcpForwarding no
+    PermitTunnel no
+    PasswordAuthentication yes
