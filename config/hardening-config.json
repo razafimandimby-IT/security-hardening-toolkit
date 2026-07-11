@@ -1,0 +1,210 @@
+{
+    "toolkit": {
+        "name": "Security Hardening Toolkit",
+        "version": "1.0.0",
+        "author": "Louis Denis RAZAFIMANDIMBY",
+        "description": "Configuration centralisee pour le hardening des serveurs"
+    },
+    "general": {
+        "log_path": "/var/log/hardening/",
+        "backup_path": "/root/hardening-backups/",
+        "backup_enabled": true,
+        "email_notifications": false,
+        "email_recipient": "admin@example.com",
+        "auto_remediate": false,
+        "max_retries": 3,
+        "timeout_seconds": 300
+    },
+    "levels": {
+        "Basic": {
+            "description": "Configuration securisee minimale, compatibilite maximale",
+            "apply_account_policies": true,
+            "apply_password_policy": true,
+            "apply_audit_policy": true,
+            "disable_insecure_services": false,
+            "configure_firewall": true,
+            "configure_defender": true,
+            "configure_ssh": true,
+            "password_min_length": 8,
+            "password_complexity": true,
+            "password_max_age_days": 90,
+            "account_lockout_threshold": 10,
+            "account_lockout_duration_minutes": 15,
+            "enable_screensaver_lock": true,
+            "screensaver_timeout_minutes": 15,
+            "enable_powershell_logging": true,
+            "disable_smbv1": true,
+            "disable_llmnr": true,
+            "max_log_size_mb": 128,
+            "log_retention_days": 30,
+            "session_timeout_minutes": 30,
+            "windows_update_setting": "download_and_notify",
+            "linux_security_updates": "auto",
+            "ssh_permit_root_login": "prohibit-password",
+            "ssh_port": 22,
+            "fail2ban_enabled": true,
+            "fail2ban_max_retries": 5,
+            "kernel_ip_forwarding": false,
+            "kernel_syn_cookies": true
+        },
+        "Standard": {
+            "description": "Durcissement equilibre securite/productivite",
+            "apply_account_policies": true,
+            "apply_password_policy": true,
+            "apply_audit_policy": true,
+            "disable_insecure_services": true,
+            "configure_firewall": true,
+            "configure_defender": true,
+            "configure_ssh": true,
+            "password_min_length": 12,
+            "password_complexity": true,
+            "password_max_age_days": 60,
+            "account_lockout_threshold": 5,
+            "account_lockout_duration_minutes": 30,
+            "enable_screensaver_lock": true,
+            "screensaver_timeout_minutes": 10,
+            "enable_powershell_logging": true,
+            "disable_smbv1": true,
+            "disable_llmnr": true,
+            "disable_mdns": true,
+            "max_log_size_mb": 256,
+            "log_retention_days": 60,
+            "session_timeout_minutes": 15,
+            "windows_update_setting": "auto_install",
+            "linux_security_updates": "auto",
+            "ssh_permit_root_login": "no",
+            "ssh_port": 2222,
+            "ssh_banner_enabled": true,
+            "fail2ban_enabled": true,
+            "fail2ban_max_retries": 3,
+            "fail2ban_ban_time_seconds": 600,
+            "kernel_ip_forwarding": false,
+            "kernel_syn_cookies": true,
+            "kernel_icmp_redirects": false,
+            "auditd_enabled": true,
+            "disable_unused_filesystems": true
+        },
+        "Advanced": {
+            "description": "Durcissement maximal, restrictions fortes",
+            "apply_account_policies": true,
+            "apply_password_policy": true,
+            "apply_audit_policy": true,
+            "disable_insecure_services": true,
+            "configure_firewall": true,
+            "configure_defender": true,
+            "configure_ssh": true,
+            "password_min_length": 16,
+            "password_complexity": true,
+            "password_max_age_days": 45,
+            "password_min_age_days": 1,
+            "account_lockout_threshold": 3,
+            "account_lockout_duration_minutes": 60,
+            "enable_screensaver_lock": true,
+            "screensaver_timeout_minutes": 5,
+            "enable_powershell_logging": true,
+            "enable_transcription": true,
+            "enable_script_block_logging": true,
+            "disable_smbv1": true,
+            "disable_llmnr": true,
+            "disable_mdns": true,
+            "disable_rdp": false,
+            "max_log_size_mb": 512,
+            "log_retention_days": 90,
+            "session_timeout_minutes": 10,
+            "windows_update_setting": "auto_install",
+            "linux_security_updates": "auto",
+            "ssh_permit_root_login": "no",
+            "ssh_port": 2222,
+            "ssh_banner_enabled": true,
+            "fail2ban_enabled": true,
+            "fail2ban_max_retries": 2,
+            "fail2ban_ban_time_seconds": 3600,
+            "kernel_ip_forwarding": false,
+            "kernel_syn_cookies": true,
+            "kernel_icmp_redirects": false,
+            "kernel_icmp_ignore_broadcasts": true,
+            "kernel_rp_filter": true,
+            "auditd_enabled": true,
+            "auditd_max_log_size_mb": 512,
+            "disable_unused_filesystems": true,
+            "apparmor_enabled": true,
+            "enable_core_dumps": false,
+            "umask_value": "027"
+        }
+    },
+    "exclusions": {
+        "windows_services_to_keep": [
+            "Spooler",
+            "WSearch"
+        ],
+        "windows_features_to_keep": [
+            "TelnetClient",
+            "SMB1Protocol"
+        ],
+        "linux_packages_to_keep": [
+            "nfs-common",
+            "rpcbind"
+        ],
+        "ports_to_keep_open": [
+            22,
+            80,
+            443,
+            3389
+        ],
+        "users_to_skip": [
+            "Administrator",
+            "root"
+        ]
+    },
+    "compliance": {
+        "pass_threshold_percent": 80,
+        "warning_threshold_percent": 60,
+        "categories": {
+            "account_policies": {
+                "weight": 20,
+                "critical": true
+            },
+            "password_policy": {
+                "weight": 15,
+                "critical": true
+            },
+            "audit_policy": {
+                "weight": 10,
+                "critical": true
+            },
+            "firewall": {
+                "weight": 15,
+                "critical": true
+            },
+            "services": {
+                "weight": 10,
+                "critical": false
+            },
+            "windows_defender": {
+                "weight": 10,
+                "critical": false
+            },
+            "user_rights": {
+                "weight": 10,
+                "critical": true
+            },
+            "registry": {
+                "weight": 5,
+                "critical": false
+            },
+            "logging": {
+                "weight": 5,
+                "critical": false
+            }
+        }
+    },
+    "networks": {
+        "trusted_subnets": [
+            "192.168.0.0/16",
+            "10.0.0.0/8"
+        ],
+        "management_subnets": [
+            "10.10.0.0/16"
+        ]
+    }
+}
