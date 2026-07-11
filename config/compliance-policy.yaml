@@ -1,0 +1,269 @@
+# Politique de conformite - Security Hardening Toolkit
+# Definir les regles de conformite pour l'audit de securite
+
+toolkit:
+  name: "Security Hardening Toolkit"
+  version: "1.0.0"
+  author: "Louis Denis RAZAFIMANDIMBY"
+
+metadata:
+  organization: "Default Organization"
+  environment: "production"
+  compliance_frameworks:
+    - "CIS Benchmarks"
+    - "NIST 800-53"
+    - "PCI-DSS 4.0"
+
+# Politiques de mots de passe
+password_policy:
+  enabled: true
+  rules:
+    minimum_length:
+      basic: 8
+      standard: 12
+      advanced: 16
+    require_uppercase: true
+    require_lowercase: true
+    require_digit: true
+    require_special_character: true
+    maximum_age_days:
+      basic: 90
+      standard: 60
+      advanced: 45
+    minimum_age_days:
+      advanced: 1
+    password_history_count:
+      standard: 12
+      advanced: 24
+    reversible_encryption: false
+
+# Politiques de verrouillage de compte
+account_lockout_policy:
+  enabled: true
+  rules:
+    lockout_threshold:
+      basic: 10
+      standard: 5
+      advanced: 3
+    lockout_duration_minutes:
+      basic: 15
+      standard: 30
+      advanced: 60
+    reset_lockout_after_minutes:
+      basic: 15
+      standard: 30
+      advanced: 60
+
+# Politiques d'audit
+audit_policy:
+  enabled: true
+  categories:
+    account_logon:
+      success: true
+      failure: true
+    account_management:
+      success: true
+      failure: true
+    detailed_tracking:
+      success: true
+      failure: false
+    ds_access:
+      success: false
+      failure: true
+    logon_logoff:
+      success: true
+      failure: true
+    object_access:
+      success: false
+      failure: true
+    policy_change:
+      success: true
+      failure: true
+    privilege_use:
+      success: false
+      failure: true
+    process_creation:
+      success: true
+      failure: false
+    system:
+      success: true
+      failure: true
+
+# Pare-feu
+firewall_policy:
+  enabled: true
+  rules:
+    default_inbound_action: "Block"
+    default_outbound_action: "Allow"
+    allowed_inbound_ports:
+      standard:
+        - 22    # SSH
+        - 80    # HTTP
+        - 443   # HTTPS
+        - 3389  # RDP (si necessaire)
+      advanced:
+        - 22
+        - 443
+    block_icmp:
+      advanced: true
+    enable_logging:
+      standard: true
+      advanced: true
+
+# Services systeme
+services_policy:
+  enabled: true
+  disabled_services_windows:
+    - "Xbox*"
+    - "Xbl*"
+    - "Fax"
+    - "irmon"
+    - "lfsvc"
+    - "SharedAccess"
+    - "wisvc"
+    - "wcncsvc"
+    - "UevAgentService"
+    - "shpamsvc"
+    - "SimAccess"
+    - "WMPNetworkSvc"
+    - "RemoteAccess"
+    - "RemoteRegistry"
+    - "dmwappushservice"
+    - "W3SVC"
+    - "MapsBroker"
+    - "diagnosticshub.*"
+    - "DiagTrack"
+    - "dmwappushsvc"
+    - "WpnService"
+
+# Windows Defender
+defender_policy:
+  enabled: true
+  real_time_protection: true
+  cloud_delivered_protection: true
+  cloud_block_level: 5
+  download_scan: true
+  script_scanning: true
+  email_scanning: true
+  removable_drive_scanning: true
+  network_protection: true
+  controlled_folder_access:
+    standard: true
+    advanced: true
+  attack_surface_reduction_rules:
+    standard: ["*"]
+    advanced: ["*"]
+  scan_parameters:
+    schedule_day: 7  # Dimanche
+    quick_scan_daily: true
+    full_scan_weekly: true
+
+# PowerShell Securise
+powershell_security:
+  enabled: true
+  rules:
+    enable_logging: true
+    enable_transcription:
+      advanced: true
+    enable_script_block_logging:
+      standard: true
+      advanced: true
+    enable_protected_event_logging: true
+    set_execution_policy: "RemoteSigned"
+
+# Configuration SSH (Linux)
+ssh_policy:
+  enabled: true
+  rules:
+    permit_root_login:
+      basic: "prohibit-password"
+      standard: "no"
+      advanced: "no"
+    password_authentication:
+      basic: true
+      standard: false
+      advanced: false
+    pubkey_authentication: true
+    x11_forwarding:
+      advanced: false
+    max_auth_tries:
+      standard: 3
+      advanced: 2
+    client_alive_interval: 300
+    client_alive_count_max: 2
+    macs:
+      standard:
+        - "hmac-sha2-512"
+        - "hmac-sha2-256"
+      advanced:
+        - "hmac-sha2-512"
+    ciphers:
+      advanced:
+        - "aes256-gcm@openssh.com"
+        - "aes128-gcm@openssh.com"
+    kex_algorithms:
+      advanced:
+        - "curve25519-sha256"
+        - "diffie-hellman-group16-sha512"
+    log_level: "VERBOSE"
+    banner_enabled: true
+    banner_path: "/etc/ssh/banner"
+
+# Kernel hardening (Linux)
+kernel_policy:
+  enabled: true
+  rules:
+    ip_forwarding: false
+    send_redirects: false
+    icmp_redirect_accept: false
+    icmp_ignore_broadcasts: true
+    icmp_broadcast_echo: false
+    syn_cookies: true
+    rp_filter: 1
+    tcp_syncookies: 1
+    tcp_rfc1337: 1
+    log_martians: true
+    ignore_icmp_echo: false
+    ignore_icmp_timestamp: false
+    smack_enabled: false
+    core_dumps:
+      standard: false
+      advanced: false
+    kernel_exec_shield: true
+    kernel_randomize_va_space: 2
+
+# Auditd (Linux)
+auditd_policy:
+  enabled: true
+  rules:
+    max_log_file_mb:
+      standard: 256
+      advanced: 512
+    max_log_file_action: "rotate"
+    num_logs: 4
+    space_left_action: "email"
+    admin_space_left_action: "halt"
+    disk_full_action: "halt"
+    disk_error_action: "syslog"
+    flush: "incremental_async"
+
+# Fail2ban (Linux)
+fail2ban_policy:
+  enabled: true
+  rules:
+    max_retry:
+      basic: 5
+      standard: 3
+      advanced: 2
+    bantime_seconds:
+      standard: 600
+      advanced: 3600
+    findtime_seconds:
+      standard: 600
+      advanced: 300
+    ignore_ips:
+      - "127.0.0.1/8"
+      - "::1"
+    jails:
+      - "sshd"
+      - "apache-auth"
